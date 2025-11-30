@@ -5,6 +5,7 @@ import { Noto_Sans_Arabic } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { ThemeProvider } from "@/components/providers/theme-provider"
 import { LanguageProvider } from "@/lib/i18n/language-context"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 const geist = Geist({ subsets: ["latin"] })
@@ -32,6 +33,7 @@ export default function RootLayout({
       <body className={`${geist.className} antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <LanguageProvider>{children}</LanguageProvider>
+          <Toaster />
         </ThemeProvider>
         <Analytics />
       </body>
