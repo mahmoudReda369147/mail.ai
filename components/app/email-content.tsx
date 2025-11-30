@@ -2,13 +2,59 @@ import { Button } from "@/components/ui/button"
 import { Sparkles } from "lucide-react"
 import type { Email } from "./email-list"
 import Link from "next/link"
+import { useEmailDetail } from "@/hooks/use-email-detail"
+import { useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { Card } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 interface EmailContentProps {
   email: Email | null
 }
 
 export function EmailContent({ email }: EmailContentProps) {
-  if (!email) {
+  const searchParams = useSearchParams()
+  const emailId = searchParams.get('id')
+  const { email: emailDetail, loading, error } = useEmailDetail(emailId)
+  const [summaryLanguage, setSummaryLanguage] = useState<'en' | 'ar'>('en')
+
+  // Use the detailed email data if available, otherwise fall back to the basic email prop
+  const displayEmail = emailDetail ? {
+    ...email,
+    sender: emailDetail.from,
+    subject: emailDetail.subject,
+    time: emailDetail.date,
+    content: emailDetail.htmlBody || emailDetail.textBody
+  } : email
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background/30 text-muted-foreground">
+        <div className="text-center px-6">
+          <div className="w-20 h-20 rounded-2xl bg-muted/50 flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-10 h-10 text-muted-foreground/50 animate-pulse" />
+          </div>
+          <p className="text-base font-medium">Loading email...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background/30 text-muted-foreground">
+        <div className="text-center px-6">
+          <div className="w-20 h-20 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+            <Sparkles className="w-10 h-10 text-red-500" />
+          </div>
+          <p className="text-base font-medium text-red-600">Failed to load email</p>
+          <p className="text-sm text-muted-foreground mt-2">{error}</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!displayEmail) {
     return (
       <div className="flex-1 flex items-center justify-center bg-background/30 text-muted-foreground">
         <div className="text-center px-6">
@@ -30,50 +76,102 @@ export function EmailContent({ email }: EmailContentProps) {
           {/* Sender Info */}
           <div className="flex items-start gap-4 mb-6">
             <div className="w-14 h-14 rounded-xl gradient-bg flex items-center justify-center text-white font-bold text-lg shadow-md shrink-0">
-              {email.sender.charAt(0).toUpperCase()}
+              {displayEmail.sender.charAt(0).toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold text-foreground mb-1">{email.sender}</h2>
+              <h2 className="text-lg font-bold text-foreground mb-1">{displayEmail.sender}</h2>
               <p className="text-sm text-muted-foreground">to me</p>
             </div>
             <div className="text-sm text-muted-foreground font-medium shrink-0">
-              {email.time}
+              {displayEmail.time}
             </div>
           </div>
 
           {/* Subject */}
           <div className="border-t border-border/50 pt-6">
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground leading-tight break-words">
-              {email.subject}
+              {displayEmail.subject}
             </h1>
           </div>
         </div>
 
+        {/* AI Summary Card */}
+        {emailDetail && (emailDetail.summary_en || emailDetail.summary_ar) && (
+          <Card className="bg-linear-to-r from-primary/5 to-accent/5 border-primary/20 backdrop-blur-sm p-6 sm:p-7 mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-linear-to-r from-primary to-accent rounded-xl flex items-center justify-center shadow-lg">
+                  <Sparkles className="w-5 h-5 text-white" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold text-foreground">AI Summary</h3>
+                  <p className="text-sm text-muted-foreground">Smart email analysis</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className="bg-primary/15 text-primary border-primary/20 font-semibold">
+                  Priority: {emailDetail.priority_score}/100
+                </Badge>
+              </div>
+            </div>
+
+            {/* Language Toggle */}
+            <div className="flex items-center gap-2 mb-4">
+              <Button
+                variant={summaryLanguage === 'en' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSummaryLanguage('en')}
+                className="text-xs font-medium"
+              >
+                English
+              </Button>
+              <Button
+                variant={summaryLanguage === 'ar' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setSummaryLanguage('ar')}
+                className="text-xs font-medium"
+              >
+                العربية
+              </Button>
+            </div>
+
+            {/* Summary Content */}
+            <div className="bg-background/50 rounded-lg p-4 border border-border/50">
+              <p className="text-sm leading-relaxed text-foreground/90">
+                {summaryLanguage === 'en' ? emailDetail.summary_en : emailDetail.summary_ar}
+              </p>
+            </div>
+          </Card>
+        )}
+        
+
         {/* Email Body Card */}
-        <div className="bg-card/95 backdrop-blur-xl border-2 border-border/50 rounded-2xl shadow-lg p-6 sm:p-8 mb-6">
+        <div className="bg-card/95 backdrop-blur-xl border-2 border-border/50 rounded-2xl  p-6 sm:p-8 mb-6">
+
           <div className="prose prose-sm sm:prose-base max-w-none">
-            <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">
-              Hi team,
-
-              I wanted to share the results from our latest Q4 marketing campaign. The numbers are looking great, and I think we have some valuable insights to discuss.
-
-              Key highlights:
-              • Email open rates increased by 25%
-              • Click-through rates improved by 18%
-              • Overall conversion was up 12% compared to Q3
-
-              I'd love to schedule a meeting to go over these results in detail and discuss our strategy for Q1.
-
-              Best regards,
-              {email.sender}
-            </p>
+            {displayEmail.content ? (
+              displayEmail.content.includes('<!DOCTYPE html') || displayEmail.content.includes('<html') ? (
+                <div 
+                  className="text-base text-foreground/90 leading-relaxed"
+                  dangerouslySetInnerHTML={{ __html: displayEmail.content }}
+                />
+              ) : (
+                <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">
+                  {displayEmail.content}
+                </p>
+              )
+            ) : (
+              <p className="text-base text-foreground/90 leading-relaxed whitespace-pre-line">
+                No content available
+              </p>
+            )}
           </div>
         </div>
 
         {/* Action Buttons */}
         <div className="flex flex-col sm:flex-row gap-3">
           <Button asChild className="gradient-bg hover:opacity-90 h-12 shadow-md hover:shadow-glow transition-all duration-300 font-semibold text-base flex-1 sm:flex-none">
-            <Link href={`/email-viewer?id=${email.id}`}>
+            <Link href={`/email-viewer?id=${displayEmail.id}`}>
               <Sparkles className="w-5 h-5 mr-2" />
               Generate AI Reply
             </Link>

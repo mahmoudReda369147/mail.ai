@@ -12,6 +12,7 @@ export interface Email {
   preview: string
   time: string
   unread: boolean
+  content?: string
 }
 
 interface EmailListProps {
@@ -53,7 +54,7 @@ export function EmailList({ emails, selectedId, onSelect, onEndReached, loadingM
   }, [onEndReached, loadingMore, hasMore])
 
   return (
-    <div className="w-full md:w-[380px] lg:w-[420px] border-r border-border/50 h-full overflow-hidden flex-shrink-0 bg-card/30 backdrop-blur-sm flex flex-col">
+    <div className="w-full md:w-[380px] lg:w-[420px] border-r border-border/50 h-full overflow-hidden shrink-0 bg-card/30 backdrop-blur-sm flex flex-col">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-card/95 backdrop-blur-xl border-b border-border/50 px-5 py-4">
         <div className="flex items-center justify-between mb-1">

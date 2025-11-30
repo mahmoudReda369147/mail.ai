@@ -9,6 +9,11 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { LanguageToggle } from "@/components/language-toggle"
 import { useLanguage } from "@/lib/i18n/language-context"
 
+// Helper function to get server URL
+const getServerUrl = () => {
+  return process.env.NEXT_PUBLIC_SERVER_URL  || ''
+}
+
 export function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
@@ -22,7 +27,7 @@ export function Navbar() {
   const router = useRouter()
 
   const handleLoginClick = () => {
-    window.location.href = "http://localhost:3000/api/auth/login"
+    window.location.href = getServerUrl() + "/auth/login"
   }
 
   useEffect(() => {

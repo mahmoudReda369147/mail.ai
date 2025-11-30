@@ -1,10 +1,12 @@
 "use client"
 
 import { useCallback, useEffect, useMemo, useState } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Sidebar } from "@/components/app/sidebar"
 import { TopBar } from "@/components/app/top-bar"
 import { EmailList, type Email } from "@/components/app/email-list"
 import { EmailContent } from "@/components/app/email-content"
+import { api } from "@/lib/api"
 
 type GmailEmail = {
   id: string
@@ -32,12 +34,30 @@ type EmailsResponse = {
 }
 
 export default function InboxPage() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [emails, setEmails] = useState<Email[]>([])
   const [selectedEmail, setSelectedEmail] = useState<Email | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
   const [nextPageToken, setNextPageToken] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(true)
+
+  // Handle email selection - navigate to email detail page
+  const handleEmailSelect = useCallback((email: Email) => {
+    router.push(`/inbox?id=${email.id}`)
+  }, [router])
+
+  // Update selected email when URL parameter changes
+  useEffect(() => {
+    const emailId = searchParams.get('id')
+    if (emailId) {
+      const email = emails.find(e => e.id === emailId)
+      setSelectedEmail(email || null)
+    } else {
+      setSelectedEmail(null)
+    }
+  }, [searchParams, emails])
 
   const mapToEmail = (item: GmailEmail): Email => {
     // sender: take name before < or the email address
@@ -61,24 +81,16 @@ export default function InboxPage() {
     }
   }
 
-  const fetchEmails = useCallback(async (pageToken?: string | null) => {
-    const url = new URL("http://localhost:3000/api/gmail/emails")
-    if (pageToken) url.searchParams.set("pageToken", pageToken)
+  const fetchEmails = useCallback(async (pageToken?: string | null): Promise<EmailsResponse> => {
+    const endpoint = pageToken 
+      ? `/gmail/emails?pageToken=${pageToken}`
+      : "/gmail/emails"
 
-    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null
-
-    const res = await fetch(url.toString(), {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      credentials: "include",
-    })
-    if (!res.ok) throw new Error(`Failed to fetch emails: ${res.status}`)
-    const json: EmailsResponse = await res.json()
-    if (!json.success) throw new Error(json.message || "Failed to fetch emails")
-    return json
+    const response = await api.get<EmailsResponse>(endpoint)
+    if (!response.data) {
+      throw new Error('No email data received')
+    }
+    return response
   }, [])
 
   // Initial load
@@ -89,11 +101,11 @@ export default function InboxPage() {
         setLoading(true)
         const data = await fetchEmails(null)
         if (!mounted) return
-        const mapped = data.data.map(mapToEmail)
+        const mapped = (data.data || []).map(mapToEmail)
         setEmails(mapped)
         setSelectedEmail(mapped[0] ?? null)
-        setNextPageToken(data.meta.nextPageToken ?? null)
-        setHasMore(Boolean(data.meta.hasMore ?? data.meta.nextPageToken))
+        setNextPageToken(data.meta?.nextPageToken ?? null)
+        setHasMore(Boolean(data.meta?.hasMore ?? data.meta?.nextPageToken))
       } catch (e) {
         console.error(e)
         setEmails([])
@@ -110,10 +122,10 @@ export default function InboxPage() {
     try {
       setLoadingMore(true)
       const data = await fetchEmails(nextPageToken)
-      const mapped = data.data.map(mapToEmail)
+      const mapped = (data.data || []).map(mapToEmail)
       setEmails(prev => [...prev, ...mapped])
-      setNextPageToken(data.meta.nextPageToken ?? null)
-      setHasMore(Boolean(data.meta.hasMore ?? data.meta.nextPageToken))
+      setNextPageToken(data.meta?.nextPageToken ?? null)
+      setHasMore(Boolean(data.meta?.hasMore ?? data.meta?.nextPageToken))
     } catch (e) {
       console.error(e)
       setHasMore(false)
@@ -131,7 +143,7 @@ export default function InboxPage() {
           <EmailList
             emails={emails}
             selectedId={selectedEmail?.id}
-            onSelect={setSelectedEmail}
+            onSelect={handleEmailSelect}
             onEndReached={handleEndReached}
             loadingMore={loadingMore}
             hasMore={hasMore}
