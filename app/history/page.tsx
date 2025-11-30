@@ -81,7 +81,7 @@ export default function HistoryPage() {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      <div className="lg:ml-64">
+      <div className="lg:ms-72">
         <TopBar />
         <div className="p-4 sm:p-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">

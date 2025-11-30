@@ -66,45 +66,47 @@ export default function TemplatesPage() {
   })
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
       <Sidebar />
-      <div className="lg:ml-64">
+      <div className="lg:ms-72">
         <TopBar />
-        <div className="p-4 sm:p-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="p-6 lg:p-8">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
             <div>
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground flex items-center gap-2">
-                <FileText className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+              <h1 className="text-3xl sm:text-4xl font-bold text-foreground flex items-center gap-3 mb-3">
+                <div className="w-12 h-12 rounded-xl gradient-bg flex items-center justify-center shadow-md">
+                  <FileText className="w-6 h-6 text-white" />
+                </div>
                 Templates
               </h1>
-              <p className="text-sm sm:text-base text-muted-foreground mt-1">Save and manage your email templates</p>
+              <p className="text-lg text-muted-foreground">Save and manage your email templates for quick replies</p>
             </div>
-            <Button className="bg-gradient-to-r from-primary to-accent hover:opacity-90 w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" />
+            <Button className="gradient-bg hover:opacity-90 w-full sm:w-auto h-12 shadow-md hover:shadow-glow transition-all duration-300 font-bold text-base">
+              <Plus className="w-5 h-5 mr-2" />
               New Template
             </Button>
           </div>
 
           {/* Search and Filter */}
-          <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col gap-5 mb-8">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
               <Input
-                placeholder="Search templates..."
-                className="pl-10"
+                placeholder="Search templates by name or content..."
+                className="pl-12 h-12 border-2 border-border focus:border-primary rounded-xl text-base bg-background/50"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
-            <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+            <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
               {categories.map((category) => (
                 <button
                   key={category}
                   onClick={() => setSelectedCategory(category)}
-                  className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap flex-shrink-0 ${
+                  className={`px-5 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap flex-shrink-0 border-2 ${
                     selectedCategory === category
-                      ? "bg-primary text-primary-foreground"
-                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      ? "bg-primary text-primary-foreground border-primary shadow-md scale-105"
+                      : "bg-background border-border text-muted-foreground hover:bg-muted hover:border-primary/30"
                   }`}
                 >
                   {category}
@@ -114,36 +116,40 @@ export default function TemplatesPage() {
           </div>
 
           {/* Templates Grid - responsive columns */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             {filteredTemplates.map((template) => (
               <Card
                 key={template.id}
-                className="group border border-white/80 bg-background rounded-2xl shadow-sm transition-all-smooth hover:-translate-y-1 hover:shadow-large animate-fade-in"
+                className="group border-2 border-border/50 hover:border-primary/30 bg-card/95 backdrop-blur-xl rounded-2xl shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl animate-fade-in"
               >
-                <CardHeader className="pb-2 p-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <CardTitle className="text-sm sm:text-base truncate">{template.name}</CardTitle>
-                      {template.starred && <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 flex-shrink-0" />}
+                <CardHeader className="pb-4 p-6 border-b border-border/50">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                      <CardTitle className="text-lg truncate font-bold">{template.name}</CardTitle>
+                      {template.starred && <Star className="w-5 h-5 fill-yellow-400 text-yellow-400 shrink-0" />}
                     </div>
-                    <Badge variant="secondary" className="text-xs flex-shrink-0">
+                    <Badge variant="secondary" className="text-xs shrink-0 font-semibold px-3 py-1">
                       {template.category}
                     </Badge>
                   </div>
-                  <CardDescription className="text-xs">Used {template.usageCount} times</CardDescription>
+                  <div className="flex items-center gap-2 text-sm">
+                    <CardDescription className="font-medium">
+                      Used {template.usageCount} times
+                    </CardDescription>
+                  </div>
                 </CardHeader>
-                <CardContent className="p-4 pt-0">
-                  <p className="text-sm text-muted-foreground line-clamp-3 mb-4">{template.content}</p>
-                  <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
-                    <Button variant="outline" size="sm" className="flex-1 bg-transparent">
-                      <Copy className="w-3 h-3 mr-1" />
-                      Use
+                <CardContent className="p-6">
+                  <p className="text-sm text-muted-foreground line-clamp-4 mb-6 leading-relaxed">{template.content}</p>
+                  <div className="flex items-center gap-2 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-200">
+                    <Button variant="outline" size="sm" className="flex-1 bg-transparent border-2 hover:border-primary/30 h-10 font-semibold">
+                      <Copy className="w-4 h-4 mr-2" />
+                      Use Template
                     </Button>
-                    <Button variant="ghost" size="sm">
-                      <Edit2 className="w-3 h-3" />
+                    <Button variant="ghost" size="sm" className="h-10 w-10 p-0 hover:bg-primary/10">
+                      <Edit2 className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
-                      <Trash2 className="w-3 h-3" />
+                    <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10 h-10 w-10 p-0">
+                      <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
                 </CardContent>
