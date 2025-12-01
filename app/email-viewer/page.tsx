@@ -27,7 +27,11 @@ export default function EmailViewerPage() {
   const emailId = searchParams.get('id')
   const { email: emailDetail, loading, error } = useEmailDetail(emailId)
   const [prompt, setPrompt] = useState("")
-  const [generatedReply, setGeneratedReply] = useState<string | null>(null)
+  const [generatedReply, setGeneratedReply] = useState<{subject_en: string, subject_ar: string, emailBody_en: string, emailBody_ar: string} | null>(null)
+  const [replySubject, setReplySubject] = useState("")
+  const [replySubjectEn, setReplySubjectEn] = useState("")
+  const [replySubjectAr, setReplySubjectAr] = useState("")
+  const [replyLanguage, setReplyLanguage] = useState<'en' | 'ar'>('en')
   const [summaryLanguage, setSummaryLanguage] = useState<'en' | 'ar'>('en')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSending, setIsSending] = useState(false)
@@ -44,13 +48,16 @@ export default function EmailViewerPage() {
       
       if (response.data?.reply) {
         setGeneratedReply(response.data.reply)
+        // Auto-populate subject fields with both English and Arabic subjects
+        setReplySubjectEn(response.data.reply.subject_en)
+        setReplySubjectAr(response.data.reply.subject_ar)
       } else {
         throw new Error('No reply generated')
       }
     } catch (err) {
       console.error('Failed to generate reply:', err)
-      // Fallback to sample reply for now
-      setGeneratedReply(sampleReply)
+      // Fallback to null for now
+      setGeneratedReply(null)
     } finally {
       setIsGenerating(false)
     }
@@ -63,7 +70,11 @@ export default function EmailViewerPage() {
 
   const handleCopy = () => {
     if (generatedReply) {
-      navigator.clipboard.writeText(generatedReply)
+      const subject = replyLanguage === 'en' ? replySubjectEn || generatedReply.subject_en : replySubjectAr || generatedReply.subject_ar
+      const body = replyLanguage === 'en' ? generatedReply.emailBody_en : generatedReply.emailBody_ar
+      const fullEmail = `Subject: ${subject}\n\n${body}`
+      
+      navigator.clipboard.writeText(fullEmail)
       toast({
         title: "Copied!",
         description: "Reply copied to clipboard",
@@ -72,7 +83,7 @@ export default function EmailViewerPage() {
   }
 
   const handleSendReply = async () => {
-    if (!generatedReply?.trim() || !emailDetail?.from) return
+    if (!generatedReply || !emailDetail?.from) return
     
     setIsSending(true)
     try {
@@ -82,8 +93,8 @@ export default function EmailViewerPage() {
       
       const response = await api.post('/gmail/send', {
         to: toEmail,
-        subject: emailDetail.subject,
-        body: generatedReply.trim()
+        subject: replyLanguage === 'en' ? replySubjectEn || generatedReply.subject_en : replySubjectAr || generatedReply.subject_ar,
+        body: replyLanguage === 'en' ? generatedReply.emailBody_en.trim() : generatedReply.emailBody_ar.trim()
       })
       
       if (response.data?.success) {
@@ -100,6 +111,8 @@ export default function EmailViewerPage() {
         
         // Clear the reply after successful send
         setGeneratedReply(null)
+        setReplySubjectEn("")
+        setReplySubjectAr("")
         setPrompt("")
       } else {
         throw new Error(response.data?.message || 'Failed to send email')
@@ -194,26 +207,39 @@ export default function EmailViewerPage() {
                   </div>
 
                   {/* Language Toggle */}
-                  <div className="flex items-center gap-2 mb-3">
-                    <Button
-                      variant={summaryLanguage === 'en' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSummaryLanguage('en')}
-                      className="text-xs"
+                  <div className="flex items-center gap-3 mb-3">
+                    <span className="text-sm font-medium text-foreground/70">English</span>
+                    <button
+                      onClick={() => setSummaryLanguage(summaryLanguage === 'en' ? 'ar' : 'en')}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      role="switch"
+                      aria-checked={summaryLanguage === 'ar'}
                     >
-                      English
-                    </Button>
-                    <Button
-                      variant={summaryLanguage === 'ar' ? 'default' : 'outline'}
-                      size="sm"
-                      onClick={() => setSummaryLanguage('ar')}
-                      className="text-xs"
+                      <span className="sr-only">Toggle language</span>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          summaryLanguage === 'ar' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                    <span 
+                      className={`text-sm font-medium ${
+                        summaryLanguage === 'ar' ? 'arabic-text text-foreground' : 'text-foreground/70'
+                      }`}
+                      dir={summaryLanguage === 'ar' ? 'rtl' : 'ltr'}
+                      lang={summaryLanguage === 'ar' ? 'ar' : 'en'}
                     >
                       العربية
-                    </Button>
+                    </span>
                   </div>
 
-                  <p className="text-sm leading-relaxed text-foreground/90">
+                  <p 
+                    className={`text-sm leading-relaxed text-foreground/90 ${
+                      summaryLanguage === 'ar' ? 'arabic-text' : ''
+                    }`}
+                    dir={summaryLanguage === 'ar' ? 'rtl' : 'ltr'}
+                    lang={summaryLanguage === 'ar' ? 'ar' : 'en'}
+                  >
                     {summaryLanguage === 'en' ? emailDetail.summary_en : emailDetail.summary_ar}
                   </p>
                 </Card>
@@ -266,22 +292,89 @@ export default function EmailViewerPage() {
               </Button>
             ) : (
               <div className="space-y-4">
+                {/* Language Toggle */}
+                <Card className="bg-card border-border p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-foreground">Reply Language</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium text-foreground/70">English</span>
+                    <button
+                      onClick={() => setReplyLanguage(replyLanguage === 'en' ? 'ar' : 'en')}
+                      className="relative inline-flex h-6 w-11 items-center rounded-full bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                      role="switch"
+                      aria-checked={replyLanguage === 'ar'}
+                    >
+                      <span className="sr-only">Toggle language</span>
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                          replyLanguage === 'ar' ? 'translate-x-6' : 'translate-x-1'
+                        }`}
+                      />
+                    </button>
+                    <span 
+                      className={`text-sm font-medium ${
+                        replyLanguage === 'ar' ? 'arabic-text text-foreground' : 'text-foreground/70'
+                      }`}
+                      dir={replyLanguage === 'ar' ? 'rtl' : 'ltr'}
+                      lang={replyLanguage === 'ar' ? 'ar' : 'en'}
+                    >
+                      العربية
+                    </span>
+                  </div>
+                </Card>
+
+                {/* Subject Input */}
+                <Card className="bg-card border-border p-3 sm:p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <span className="text-sm font-medium text-foreground">Email Subject</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={replyLanguage === 'en' ? replySubjectEn || generatedReply?.subject_en || '' : replySubjectAr || generatedReply?.subject_ar || ''}
+                    onChange={(e) => {
+                      if (replyLanguage === 'en') {
+                        setReplySubjectEn(e.target.value)
+                      } else {
+                        setReplySubjectAr(e.target.value)
+                      }
+                    }}
+                    className={`w-full p-3 bg-background border-2 border-border/50 rounded-xl text-foreground text-sm focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-muted-foreground/50 ${
+                      replyLanguage === 'ar' ? 'arabic-text text-right' : ''
+                    }`}
+                    dir={replyLanguage === 'ar' ? 'rtl' : 'ltr'}
+                    lang={replyLanguage === 'ar' ? 'ar' : 'en'}
+                    placeholder={replyLanguage === 'ar' ? 'أدخل الموضوع...' : 'Enter email subject...'}
+                  />
+                </Card>
+
                 <Card className="bg-card border-border p-3 sm:p-4">
                   <div className="flex items-center justify-between mb-3">
                     <span className="text-sm font-medium text-foreground">Generated Reply</span>
-                    <Badge className="bg-gradient-to-r from-primary to-accent text-white border-0">
+                    <Badge className="bg-linear-to-r from-primary to-accent text-white border-0">
                       Custom Prompt
                     </Badge>
                   </div>
                   <div className="relative">
                     <textarea
-                      value={generatedReply}
-                      onChange={(e) => setGeneratedReply(e.target.value)}
-                      className="w-full min-h-[400px] max-h-[600px] p-4 bg-background border-2 border-border/50 rounded-xl text-foreground text-sm leading-relaxed resize-y focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-muted-foreground/50"
-                      placeholder="AI-generated reply will appear here..."
+                      value={replyLanguage === 'en' ? generatedReply?.emailBody_en || '' : generatedReply?.emailBody_ar || ''}
+                      onChange={(e) => {
+                        if (generatedReply) {
+                          setGeneratedReply({
+                            ...generatedReply,
+                            [replyLanguage === 'en' ? 'emailBody_en' : 'emailBody_ar']: e.target.value
+                          })
+                        }
+                      }}
+                      className={`w-full min-h-[400px] max-h-[600px] p-4 bg-background border-2 border-border/50 rounded-xl text-foreground text-sm leading-relaxed resize-y focus:border-primary/50 focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 placeholder:text-muted-foreground/50 ${
+                        replyLanguage === 'ar' ? 'arabic-text text-right' : ''
+                      }`}
+                      dir={replyLanguage === 'ar' ? 'rtl' : 'ltr'}
+                      lang={replyLanguage === 'ar' ? 'ar' : 'en'}
+                      placeholder={replyLanguage === 'ar' ? 'سيظهر الرد الذي تم إنشاؤه بواسطة الذكاء الاصطناعي هنا...' : 'AI-generated reply will appear here...'}
                     />
                     <div className="absolute bottom-2 right-2 text-xs text-muted-foreground/70">
-                      {generatedReply.length} characters
+                      {(replyLanguage === 'en' ? generatedReply?.emailBody_en : generatedReply?.emailBody_ar)?.length || 0} characters
                     </div>
                   </div>
                 </Card>
@@ -299,7 +392,7 @@ export default function EmailViewerPage() {
 
                 <Button 
                   onClick={handleSendReply} 
-                  disabled={isSending || !generatedReply?.trim()} 
+                  disabled={isSending || !generatedReply} 
                   className="w-full h-11 sm:h-12"
                 >
                   {isSending ? (

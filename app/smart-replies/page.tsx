@@ -89,17 +89,17 @@ export default function SmartRepliesPage() {
           <div className="grid grid-cols-1 xl:grid-cols-5 gap-6 lg:gap-8">
             {/* Input Section */}
             <div className="xl:col-span-2">
-              <Card className="border-2 border-border/50 bg-card/95 backdrop-blur-xl rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300">
-                <CardHeader className="p-6 sm:p-8 border-b border-border/50">
+              <div className="border-2 border-border/50 bg-card/95 backdrop-blur-xl rounded-2xl transition-all duration-300">
+                <div className="p-6 sm:p-8 border-b border-border/50">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                       <Wand2 className="w-5 h-5 text-primary" />
                     </div>
-                    <CardTitle className="text-xl font-bold">Compose Reply</CardTitle>
+                    <h3 className="text-xl font-bold">Compose Reply</h3>
                   </div>
-                  <CardDescription className="text-base">Paste the email you want to reply to</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6 p-6 sm:p-8">
+                  <p className="text-base text-muted-foreground">Paste the email you want to reply to</p>
+                </div>
+                <div className="space-y-6 p-6 sm:p-8">
                   <div>
                     <label className="text-sm font-semibold text-foreground mb-3 block">Email Content</label>
                     <Textarea
@@ -147,8 +147,8 @@ export default function SmartRepliesPage() {
                       </>
                     )}
                   </Button>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </div>
 
             {/* Suggestions Section */}
@@ -162,12 +162,12 @@ export default function SmartRepliesPage() {
 
               <div className="grid gap-4">
                 {suggestedReplies.map((reply, index) => (
-                  <Card
+                  <div
                     key={reply.id}
-                    className="border-2 border-border/50 bg-card/95 backdrop-blur-xl rounded-2xl shadow-md hover:shadow-lg hover:border-primary/30 transition-all duration-300 group animate-fade-in"
+                    className="border-2 border-border/50 bg-card/95 backdrop-blur-xl rounded-2xl hover:border-primary/30 transition-all duration-300 group animate-fade-in"
                     style={{ animationDelay: `${index * 100}ms` }}
                   >
-                    <CardContent className="p-5 sm:p-6">
+                    <div className="p-5 sm:p-6">
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div className="flex items-center gap-3">
                           <span className="text-2xl">{reply.toneIcon}</span>
@@ -215,8 +215,8 @@ export default function SmartRepliesPage() {
                           Use This Reply
                         </Button>
                       </div>
-                    </CardContent>
-                  </Card>
+                    </div>
+                  </div>
                 ))}
               </div>
             </div>

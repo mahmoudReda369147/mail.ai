@@ -3,7 +3,8 @@
 
 @layer base {
   :root {
-    --font-sans-arabic: 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+    --font-sans-arabic: 'Cairo', 'Noto Sans Arabic', system-ui, -apple-system, sans-serif;
+    --font-arabic-fallback: 'Tajawal', 'Helvetica Neue', Arial, sans-serif;
   }
 
   [dir='rtl'] {
@@ -11,14 +12,90 @@
     text-align: right;
   }
   
-  /* Improve Arabic text rendering */
+  /* Enhanced Arabic text rendering */
   [lang='ar'],
-  [lang='ar'] * {
-    font-family: var(--font-sans-arabic);
+  [lang='ar'] *,
+  .arabic-text {
+    font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
     text-align: right;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-variant-ligatures: common-ligatures contextual;
+    font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+    line-height: 1.8;
+    letter-spacing: 0.02em;
+  }
+
+  /* Better Arabic typography */
+  [lang='ar'] h1,
+  [lang='ar'] h2,
+  [lang='ar'] h3,
+  [lang='ar'] h4,
+  [lang='ar'] h5,
+  [lang='ar'] h6,
+  .arabic-text h1,
+  .arabic-text h2,
+  .arabic-text h3,
+  .arabic-text h4,
+  .arabic-text h5,
+  .arabic-text h6 {
+    font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
+    font-weight: 700;
+    line-height: 1.4;
+    letter-spacing: -0.01em;
+  }
+
+  [lang='ar'] p,
+  [lang='ar'] span,
+  [lang='ar'] div,
+  [lang='ar'] button,
+  [lang='ar'] input,
+  [lang='ar'] textarea,
+  .arabic-text p,
+  .arabic-text span,
+  .arabic-text div,
+  .arabic-text button,
+  .arabic-text input,
+  .arabic-text textarea {
+    font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
+    font-weight: 400;
+    line-height: 1.8;
+    letter-spacing: 0.01em;
+  }
+
+  /* Apply Arabic font to entire RTL layout */
+  [dir='rtl'] body,
+  [dir='rtl'] * {
+    font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
+  }
+
+  /* RTL layout adjustments */
+  [dir='rtl'] .flex {
+    flex-direction: row-reverse;
+  }
+
+  [dir='rtl'] .text-left {
+    text-align: right;
+  }
+
+  [dir='rtl'] .text-right {
+    text-align: left;
+  }
+
+  [dir='rtl'] .ml-auto {
+    margin-left: auto;
+    margin-right: 0;
+  }
+
+  [dir='rtl'] .mr-auto {
+    margin-right: auto;
+    margin-left: 0;
+  }
+
+  /* Ensure Arabic text is always styled correctly */
+  html[dir='rtl'] {
+    font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
   }
 }
 
@@ -192,6 +269,27 @@
 
 .transition-all-smooth {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Arabic text utility class */
+.arabic-font {
+  font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
+  text-align: right;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-variant-ligatures: common-ligatures contextual;
+  font-feature-settings: "kern" 1, "liga" 1, "calt" 1;
+  line-height: 1.8;
+  letter-spacing: 0.02em;
+}
+
+.arabic-heading {
+  font-family: var(--font-sans-arabic), var(--font-arabic-fallback);
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: -0.01em;
+  text-align: right;
 }
 
 @keyframes float {

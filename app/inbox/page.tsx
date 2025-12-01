@@ -94,7 +94,7 @@ export default function InboxPage() {
   }, [])
 
   // Initial load
-  useEffect(() => {
+  const loadEmails = useCallback(async () => {
     let mounted = true
     ;(async () => {
       try {
@@ -116,6 +116,11 @@ export default function InboxPage() {
     })()
     return () => { mounted = false }
   }, [fetchEmails])
+
+  // Initial load
+  useEffect(() => {
+    loadEmails()
+  }, [loadEmails])
 
   const handleEndReached = useCallback(async () => {
     if (loadingMore || !hasMore) return
@@ -147,6 +152,7 @@ export default function InboxPage() {
             onEndReached={handleEndReached}
             loadingMore={loadingMore}
             hasMore={hasMore}
+            onRefetch={loadEmails}
           />
           <div className="hidden md:flex flex-1">
             <EmailContent email={selectedEmail} />

@@ -1,9 +1,22 @@
 "use client"
 
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
+import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
-import { Star, Paperclip, Archive, Trash2, MoreVertical } from "lucide-react"
+import { Star, Paperclip, Archive, Trash2, MoreVertical, CheckCircle, XCircle } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { useToast } from "@/hooks/use-toast"
+import { api } from "@/lib/api"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
 
 export interface Email {
   id: string
@@ -22,12 +35,69 @@ interface EmailListProps {
   onEndReached?: () => void
   loadingMore?: boolean
   hasMore?: boolean
+  onEmailDeleted?: (emailId: string) => void
+  onRefetch?: () => void
 }
 
-export function EmailList({ emails, selectedId, onSelect, onEndReached, loadingMore = false, hasMore = true }: EmailListProps) {
+export function EmailList({ emails, selectedId, onSelect, onEndReached, loadingMore = false, hasMore = true, onEmailDeleted, onRefetch }: EmailListProps) {
   const scrollRef = useRef<HTMLDivElement | null>(null)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+  const { toast } = useToast()
+  const router = useRouter()
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false)
+  const [emailToDelete, setEmailToDelete] = useState<string | null>(null)
   const unreadCount = emails.filter(e => e.unread).length
+
+  const handleDeleteEmail = async (emailId: string, event: React.MouseEvent) => {
+    event.stopPropagation() // Prevent selecting the email when clicking delete
+    setEmailToDelete(emailId)
+    setDeleteConfirmOpen(true)
+  }
+
+  const confirmDelete = async () => {
+    if (!emailToDelete) return
+    
+    try {
+      await api.delete(`/gmail/emails/${emailToDelete}`)
+      
+      toast({
+        title: "Email deleted",
+        description: "The email has been successfully deleted.",
+        variant: "default",
+        className: "bg-green-500 text-white border-green-600",
+        action: <CheckCircle className="w-5 h-5 text-white" />,
+      })
+      
+      // Notify parent component to update the email list
+      if (onEmailDeleted) {
+        onEmailDeleted(emailToDelete)
+      }
+      
+      // Navigate to inbox after successful deletion
+      router.push('/inbox')
+      
+      // Refetch emails to get updated list
+      if (onRefetch) {
+        onRefetch()
+      }
+    } catch (error) {
+      console.error('Failed to delete email:', error)
+      toast({
+        title: "Failed to delete email",
+        description: "There was an error deleting the email. Please try again.",
+        variant: "destructive",
+        action: <XCircle className="w-5 h-5" />,
+      })
+    } finally {
+      setDeleteConfirmOpen(false)
+      setEmailToDelete(null)
+    }
+  }
+
+  const cancelDelete = () => {
+    setDeleteConfirmOpen(false)
+    setEmailToDelete(null)
+  }
 
   // Observe end-of-list to trigger pagination
   useEffect(() => {
@@ -133,7 +203,10 @@ export function EmailList({ emails, selectedId, onSelect, onEndReached, loadingM
                     <button className="p-1.5 rounded-md hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors">
                       <Archive className="w-4 h-4" />
                     </button>
-                    <button className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                    <button 
+                      className="p-1.5 rounded-md hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      onClick={(e) => handleDeleteEmail(email.id, e)}
+                    >
                       <Trash2 className="w-4 h-4" />
                     </button>
                     <button className="p-1.5 rounded-md hover:bg-yellow-500/10 text-muted-foreground hover:text-yellow-600 transition-colors">
@@ -162,6 +235,24 @@ export function EmailList({ emails, selectedId, onSelect, onEndReached, loadingM
           </div>
         </div>
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Email</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this email? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelDelete}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

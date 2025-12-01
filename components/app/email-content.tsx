@@ -97,10 +97,10 @@ export function EmailContent({ email }: EmailContentProps) {
 
         {/* AI Summary Card */}
         {emailDetail && (emailDetail.summary_en || emailDetail.summary_ar) && (
-          <Card className="bg-linear-to-r from-primary/5 to-accent/5 border-primary/20 backdrop-blur-sm p-6 sm:p-7 mb-6">
+          <div className="bg-card/95 backdrop-blur-xl border-2 border-border/50 rounded-2xl p-6 sm:p-8 mb-6">
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-linear-to-r from-primary to-accent rounded-xl flex items-center justify-center shadow-lg">
+                <div className="w-10 h-10 bg-linear-to-r from-primary to-accent rounded-xl flex items-center justify-center">
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -116,32 +116,45 @@ export function EmailContent({ email }: EmailContentProps) {
             </div>
 
             {/* Language Toggle */}
-            <div className="flex items-center gap-2 mb-4">
-              <Button
-                variant={summaryLanguage === 'en' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSummaryLanguage('en')}
-                className="text-xs font-medium"
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-sm font-medium text-foreground/70">English</span>
+              <button
+                onClick={() => setSummaryLanguage(summaryLanguage === 'en' ? 'ar' : 'en')}
+                className="relative inline-flex h-6 w-11 items-center rounded-full bg-muted transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                role="switch"
+                aria-checked={summaryLanguage === 'ar'}
               >
-                English
-              </Button>
-              <Button
-                variant={summaryLanguage === 'ar' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSummaryLanguage('ar')}
-                className="text-xs font-medium"
+                <span className="sr-only">Toggle language</span>
+                <span
+                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                    summaryLanguage === 'ar' ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <span 
+                className={`text-sm font-medium ${
+                  summaryLanguage === 'ar' ? 'arabic-text text-foreground' : 'text-foreground/70'
+                }`}
+                dir={summaryLanguage === 'ar' ? 'rtl' : 'ltr'}
+                lang={summaryLanguage === 'ar' ? 'ar' : 'en'}
               >
                 العربية
-              </Button>
+              </span>
             </div>
 
             {/* Summary Content */}
             <div className="bg-background/50 rounded-lg p-4 border border-border/50">
-              <p className="text-sm leading-relaxed text-foreground/90">
+              <p 
+                className={`text-sm leading-relaxed text-foreground/90 ${
+                  summaryLanguage === 'ar' ? 'arabic-text' : ''
+                }`}
+                dir={summaryLanguage === 'ar' ? 'rtl' : 'ltr'}
+                lang={summaryLanguage === 'ar' ? 'ar' : 'en'}
+              >
                 {summaryLanguage === 'en' ? emailDetail.summary_en : emailDetail.summary_ar}
               </p>
             </div>
-          </Card>
+          </div>
         )}
         
 
